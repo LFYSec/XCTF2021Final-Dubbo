@@ -1,0 +1,9 @@
+#!/bin/sh
+
+php-fpm &
+
+nginx &
+
+echo "Running..."
+
+tail -F /var/log/nginx/*.log

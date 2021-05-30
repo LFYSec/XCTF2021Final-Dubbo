@@ -1,0 +1,59 @@
+version: '2'
+services:
+  phpssrf:
+    build: ./php
+    ports:
+      - "8090:80"
+    restart: always
+    volumes:
+      - ./php/_files/index.php:/var/www/html/index.php:ro
+    networks:
+      internal_network:
+        ipv4_address: 10.0.20.10
+      external_network:
+        ipv4_address: 10.0.30.10
+
+  zk_server: 
+    image: "zookeeper:latest"
+    restart: always
+    networks:
+      internal_network:
+        ipv4_address: 10.0.20.11
+
+  dubbo_provider: 
+    build: ./java/dubbo-provider/
+    links: 
+      - zk_server:zkhost
+    environment:
+      TOMCAT_SERVER_ID: dubbo_provider_tomcat
+    restart: always
+    networks:
+      internal_network:
+        ipv4_address: 10.0.20.12
+
+  dubbo_consumer: 
+    build: ./java/dubbo-customer/
+    links: 
+      - zk_server:zkhost
+    ports: 
+      - "8080:8080"
+    environment:
+      TOMCAT_SERVER_ID: dubbo_consumer_tomcat
+    restart: always
+    networks:
+      internal_network:
+        ipv4_address: 10.0.20.13
+
+networks:
+  internal_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.20.0/24
+  external_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.30.0/24
